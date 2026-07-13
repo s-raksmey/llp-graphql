@@ -62,6 +62,14 @@ const JSONScalar = new GraphQLScalarType({
 
 const nestedResolvers: ResolverMap = {
   Category: {
+    lectureCount: (source) =>
+      categoryResolvers.Category.lectureCount(
+        source as Parameters<typeof categoryResolvers.Category.lectureCount>[0],
+      ),
+    outlineItemCount: (source) =>
+      categoryResolvers.Category.outlineItemCount(
+        source as Parameters<typeof categoryResolvers.Category.outlineItemCount>[0],
+      ),
     outlineItems: (source) =>
       categoryResolvers.Category.outlineItems(
         source as Parameters<typeof categoryResolvers.Category.outlineItems>[0],
@@ -94,6 +102,8 @@ export const rootValue = {
   categories: categoryResolvers.categories,
   category: categoryResolvers.category,
   createCategory: categoryResolvers.createCategory,
+  updateCategory: categoryResolvers.updateCategory,
+  updateCategoryStatus: categoryResolvers.updateCategoryStatus,
   deleteCategory: categoryResolvers.deleteCategory,
 
   lectures: lectureResolvers.lectures,

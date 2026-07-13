@@ -3,6 +3,8 @@ import {
   CreateCategoryInput,
   type CategoryFilters,
   type CategoryRow,
+  type UpdateCategoryInput,
+  type UpdateCategoryStatusInput,
 } from "./category.repository";
 import { lectureRepository } from "../lectures/lecture.repository";
 
@@ -21,11 +23,27 @@ export const categoryResolvers = {
     return categoryRepository.create(args.input);
   },
 
+  updateCategory: (args: { input: UpdateCategoryInput }) => {
+    return categoryRepository.update(args.input);
+  },
+
+  updateCategoryStatus: (args: { input: UpdateCategoryStatusInput }) => {
+    return categoryRepository.updateStatus(args.input);
+  },
+
   deleteCategory: (args: { id: string }) => {
     return categoryRepository.deleteById(args.id);
   },
 
   Category: {
+    lectureCount: (category: CategorySource) => {
+      return categoryRepository.countLectures(category.id);
+    },
+
+    outlineItemCount: (category: CategorySource) => {
+      return categoryRepository.countOutlineItems(category.id);
+    },
+
     outlineItems: (category: CategorySource) => {
       return categoryRepository.findOutlineItems(category.id);
     },

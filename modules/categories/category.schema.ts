@@ -17,6 +17,8 @@ export const categorySchema = `
         description: String
         scope: CategoryScope!
         status: CategoryStatus!
+        lectureCount: Int!
+        outlineItemCount: Int!
         outlineItems: [CategoryOutlineItem!]!
         lectures: [Lecture!]!
         createdAt: String
@@ -46,6 +48,19 @@ export const categorySchema = `
         scope: CategoryScope!
     }
 
+    input UpdateCategoryInput {
+        id: ID!
+        name: String!
+        slug: String!
+        description: String
+        scope: CategoryScope!
+    }
+
+    input UpdateCategoryStatusInput {
+        id: ID!
+        status: CategoryStatus!
+    }
+
     extend type Query {
         categories(status: CategoryStatus, scope: CategoryScope): [Category!]!
         category(slug: String!): Category
@@ -53,6 +68,8 @@ export const categorySchema = `
 
     extend type Mutation {
         createCategory(input: CreateCategoryInput!): Category!
+        updateCategory(input: UpdateCategoryInput!): Category!
+        updateCategoryStatus(input: UpdateCategoryStatusInput!): Category!
         deleteCategory(id: ID!): DeleteCategoryPayload!
     }
 `

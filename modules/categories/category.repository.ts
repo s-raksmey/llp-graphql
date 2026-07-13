@@ -37,6 +37,15 @@ export type CreateCategoryInput = {
   scope: CategoryScope;
 };
 
+export type UpdateCategoryInput = CreateCategoryInput & {
+  id: string | number;
+};
+
+export type UpdateCategoryStatusInput = {
+  id: string | number;
+  status: CategoryStatus;
+};
+
 export type CountRow = RowDataPacket & {
   total: number;
 };
@@ -148,6 +157,32 @@ export const categoryRepository = {
     return rows;
   },
 
+  async countOutlineItems(categoryId: string | number): Promise<number> {
+    const [rows] = await db.query<CountRow[]>(
+      `
+      SELECT COUNT(*) AS total
+      FROM category_outline_items
+      WHERE category_id = ?
+      `,
+      [categoryId],
+    );
+
+    return rows[0]?.total ?? 0;
+  },
+
+  async countLectures(categoryId: string | number): Promise<number> {
+    const [rows] = await db.query<CountRow[]>(
+      `
+      SELECT COUNT(*) AS total
+      FROM lectures
+      WHERE category_id = ?
+      `,
+      [categoryId],
+    );
+
+    return rows[0]?.total ?? 0;
+  },
+
   async create(input: CreateCategoryInput): Promise<CategoryRow> {
     const [result] = await db.execute<ResultSetHeader>(
       `
@@ -172,6 +207,68 @@ export const categoryRepository = {
 
     if (!category) {
       throw new Error("Category was created but could not be loaded.");
+    }
+
+    return category;
+  },
+
+  async update(input: UpdateCategoryInput): Promise<CategoryRow> {
+    const existingSlug = await this.findBySlug(input.slug);
+
+    if (existingSlug && String(existingSlug.id) !== String(input.id)) {
+      throw new Error("Another category already uses this slug.");
+    }
+
+    const [result] = await db.execute<ResultSetHeader>(
+      `
+      UPDATE categories
+      SET
+        name = ?,
+        slug = ?,
+        description = ?,
+        scope = ?
+      WHERE id = ?
+      `,
+      [
+        input.name,
+        input.slug,
+        input.description ?? null,
+        input.scope,
+        input.id,
+      ],
+    );
+
+    if (result.affectedRows === 0) {
+      throw new Error("Category was not found.");
+    }
+
+    const category = await this.findById(input.id);
+
+    if (!category) {
+      throw new Error("Category was updated but could not be loaded.");
+    }
+
+    return category;
+  },
+
+  async updateStatus(input: UpdateCategoryStatusInput): Promise<CategoryRow> {
+    const [result] = await db.execute<ResultSetHeader>(
+      `
+      UPDATE categories
+      SET status = ?
+      WHERE id = ?
+      `,
+      [input.status, input.id],
+    );
+
+    if (result.affectedRows === 0) {
+      throw new Error("Category was not found.");
+    }
+
+    const category = await this.findById(input.id);
+
+    if (!category) {
+      throw new Error("Category status was updated but could not be loaded.");
     }
 
     return category;
