@@ -7,11 +7,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "db:migrate": "node scripts/run-sql.mjs database/schema.sql",
+    "db:seed": "node scripts/run-sql.mjs database/seed.sql",
+    "db:setup": "npm run db:migrate && npm run db:seed",
     "typecheck": "next typegen && tsc --noEmit",
     "check": "npm run typecheck && npm run lint"
   },
   "dependencies": {
     "graphql": "^17.0.2",
+    "mysql2": "^3.22.6",
     "next": "16.2.10",
     "react": "19.2.4",
     "react-dom": "19.2.4"
