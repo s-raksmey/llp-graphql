@@ -21,6 +21,10 @@ export const categoryResolvers = {
     return categoryRepository.create(args.input);
   },
 
+  deleteCategory: (args: { id: string }) => {
+    return categoryRepository.deleteById(args.id);
+  },
+
   Category: {
     outlineItems: (category: CategorySource) => {
       return categoryRepository.findOutlineItems(category.id);

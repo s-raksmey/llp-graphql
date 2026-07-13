@@ -94,6 +94,7 @@ export const rootValue = {
   categories: categoryResolvers.categories,
   category: categoryResolvers.category,
   createCategory: categoryResolvers.createCategory,
+  deleteCategory: categoryResolvers.deleteCategory,
 
   lectures: lectureResolvers.lectures,
   lecture: lectureResolvers.lecture,

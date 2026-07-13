@@ -37,6 +37,16 @@ export type CreateCategoryInput = {
   scope: CategoryScope;
 };
 
+export type CountRow = RowDataPacket & {
+  total: number;
+};
+
+export type DeleteCategoryResult = {
+  id: string;
+  success: boolean;
+  message: string;
+};
+
 export const categoryRepository = {
   async findAll(args: CategoryFilters = {}): Promise<CategoryRow[]> {
     const where: string[] = [];
@@ -165,5 +175,48 @@ export const categoryRepository = {
     }
 
     return category;
-  }
+  },
+
+  async deleteById(id: string | number): Promise<DeleteCategoryResult> {
+    const [lectureRows] = await db.query<CountRow[]>(
+      `
+      SELECT COUNT(*) AS total
+      FROM lectures
+      WHERE category_id = ?
+      `,
+      [id],
+    );
+
+    const lectureCount = lectureRows[0]?.total ?? 0;
+
+    if (lectureCount > 0) {
+      return {
+        id: String(id),
+        success: false,
+        message: "Category is used by lectures. Archive it instead.",
+      };
+    }
+
+    const [result] = await db.execute<ResultSetHeader>(
+      `
+      DELETE FROM categories
+      WHERE id = ?
+      `,
+      [id],
+    );
+
+    if (result.affectedRows === 0) {
+      return {
+        id: String(id),
+        success: false,
+        message: "Category was not found.",
+      };
+    }
+
+    return {
+      id: String(id),
+      success: true,
+      message: "Category deleted.",
+    };
+  },
 };

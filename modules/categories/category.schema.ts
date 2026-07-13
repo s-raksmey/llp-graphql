@@ -33,6 +33,12 @@ export const categorySchema = `
         updatedAt: String
     }
 
+    type DeleteCategoryPayload {
+        id: ID!
+        success: Boolean!
+        message: String!
+    }
+
     input CreateCategoryInput {
         name: String!
         slug: String!
@@ -47,5 +53,6 @@ export const categorySchema = `
 
     extend type Mutation {
         createCategory(input: CreateCategoryInput!): Category!
+        deleteCategory(id: ID!): DeleteCategoryPayload!
     }
 `
