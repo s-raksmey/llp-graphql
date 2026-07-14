@@ -6,6 +6,7 @@ import {
   type CreateLectureInput,
   type LectureContentRow,
   type SaveLectureContentInput,
+  type UpdateLectureStatusInput,
 } from "./lecture.repository";
 
 type LectureSource = Pick<LectureRow, "id" | "categoryId">;
@@ -45,6 +46,10 @@ export const lectureResolvers = {
   saveLectureContent: async (args: { input: SaveLectureContentInput }) => {
     const content = await lectureRepository.saveContent(args.input);
     return toLectureContent(content);
+  },
+
+  updateLectureStatus: (args: { input: UpdateLectureStatusInput }) => {
+    return lectureRepository.updateStatus(args.input);
   },
 
   Lecture: {

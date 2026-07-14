@@ -118,6 +118,7 @@ export const rootValue = {
   lecture: lectureResolvers.lecture,
   createLecture: lectureResolvers.createLecture,
   saveLectureContent: lectureResolvers.saveLectureContent,
+  updateLectureStatus: lectureResolvers.updateLectureStatus,
 };
 
 export async function executeGraphQLRequest(input: GraphQLRequestInput) {

@@ -64,6 +64,11 @@ export type SaveLectureContentInput = {
   status?: LectureContentStatus;
 };
 
+export type UpdateLectureStatusInput = {
+  id: string | number;
+  status: LectureStatus;
+};
+
 export const lectureRepository = {
   async findAll(args: LectureFilters = {}): Promise<LectureRow[]> {
     const where: string[] = [];
@@ -307,20 +312,6 @@ export const lectureRepository = {
       ],
     );
 
-    if (status === "PUBLISHED") {
-      await db.execute(
-        `
-        UPDATE lectures
-        SET
-          status = 'PUBLISHED',
-          published_at = COALESCE(published_at, CURRENT_TIMESTAMP),
-          updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-        `,
-        [input.lectureId],
-      );
-    }
-
     const content = await this.findContentByOutlineItem(input.outlineItemId);
 
     if (!content) {
@@ -328,5 +319,56 @@ export const lectureRepository = {
     }
 
     return content;
+  },
+
+  async updateStatus(input: UpdateLectureStatusInput): Promise<LectureRow> {
+    const connection = await db.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+      await connection.execute(
+      `
+      UPDATE lectures
+      SET
+        status = ?,
+        published_at = CASE
+          WHEN ? = 'PUBLISHED' AND published_at IS NULL THEN CURRENT_TIMESTAMP
+          ELSE published_at
+        END,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+      `,
+      [input.status, input.status, input.id],
+      );
+
+      if (input.status === "PUBLISHED" || input.status === "DRAFT") {
+        await connection.execute(
+          `
+          UPDATE lecture_contents
+          SET
+            status = ?,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE lecture_id = ?
+          `,
+          [input.status, input.id],
+        );
+      }
+
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+
+    const lecture = await this.findById(input.id);
+
+    if (!lecture) {
+      throw new Error("Lecture status was updated but could not be loaded.");
+    }
+
+    return lecture;
   },
 };

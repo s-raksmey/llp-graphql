@@ -71,9 +71,15 @@ export const lectureSchema = `
         status: LectureContentStatus = DRAFT
     }
 
+    input UpdateLectureStatusInput {
+        id: ID!
+        status: LectureStatus!
+    }
+
     extend type Mutation {
         createLecture(input: CreateLectureInput!): Lecture!
         saveLectureContent(input: SaveLectureContentInput!): LectureContent!
+        updateLectureStatus(input: UpdateLectureStatusInput!): Lecture!
     }
 
     extend type Query {
