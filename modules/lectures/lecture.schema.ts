@@ -7,6 +7,12 @@ export const lectureSchema = `
         ARCHIVED
     }
 
+    enum LectureContentStatus {
+        DRAFT
+        PUBLISHED
+        ARCHIVED
+    }
+
     type Lecture {
         id: ID!
         categoryId: ID
@@ -29,6 +35,17 @@ export const lectureSchema = `
         parentId: ID
         title: String!
         sortOrder: Int!
+        content: LectureContent
+        createdAt: String
+        updatedAt: String
+    }
+
+    type LectureContent {
+        id: ID!
+        lectureId: ID!
+        outlineItemId: ID!
+        content: JSON
+        status: LectureContentStatus!
         createdAt: String
         updatedAt: String
     }
@@ -47,8 +64,16 @@ export const lectureSchema = `
         children: [String!]!
     }
 
+    input SaveLectureContentInput {
+        lectureId: ID!
+        outlineItemId: ID!
+        content: JSON!
+        status: LectureContentStatus = DRAFT
+    }
+
     extend type Mutation {
         createLecture(input: CreateLectureInput!): Lecture!
+        saveLectureContent(input: SaveLectureContentInput!): LectureContent!
     }
 
     extend type Query {

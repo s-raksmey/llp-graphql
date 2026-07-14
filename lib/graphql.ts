@@ -89,6 +89,14 @@ const nestedResolvers: ResolverMap = {
         source as Parameters<typeof lectureResolvers.Lecture.outlineItems>[0],
       ),
   },
+  LectureOutlineItem: {
+    content: (source) =>
+      lectureResolvers.LectureOutlineItem.content(
+        source as Parameters<
+          typeof lectureResolvers.LectureOutlineItem.content
+        >[0],
+      ),
+  },
 };
 
 export const rootValue = {
@@ -109,6 +117,7 @@ export const rootValue = {
   lectures: lectureResolvers.lectures,
   lecture: lectureResolvers.lecture,
   createLecture: lectureResolvers.createLecture,
+  saveLectureContent: lectureResolvers.saveLectureContent,
 };
 
 export async function executeGraphQLRequest(input: GraphQLRequestInput) {

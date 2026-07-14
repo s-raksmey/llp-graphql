@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import type { ResultSetHeader, RowDataPacket } from "mysql2";
 
 export type LectureStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
+export type LectureContentStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 
 export type LectureRow = RowDataPacket & {
   id: number;
@@ -27,6 +28,16 @@ export type LectureOutlineItemRow = RowDataPacket & {
   updatedAt: Date | null;
 };
 
+export type LectureContentRow = RowDataPacket & {
+  id: number;
+  lectureId: number;
+  outlineItemId: number;
+  content: unknown | null;
+  status: LectureContentStatus;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+};
+
 export type LectureFilters = {
   status?: LectureStatus;
   categoryId?: string | number;
@@ -44,7 +55,14 @@ export type CreateLectureInput = {
   description?: string;
   readingTime?: string;
   outlineItems: CreateLectureOutlineItemInput[];
-}
+};
+
+export type SaveLectureContentInput = {
+  lectureId: string | number;
+  outlineItemId: string | number;
+  content: unknown;
+  status?: LectureContentStatus;
+};
 
 export const lectureRepository = {
   async findAll(args: LectureFilters = {}): Promise<LectureRow[]> {
@@ -129,6 +147,29 @@ export const lectureRepository = {
     );
 
     return rows;
+  },
+
+  async findContentByOutlineItem(
+    outlineItemId: string | number,
+  ): Promise<LectureContentRow | null> {
+    const [rows] = await db.query<LectureContentRow[]>(
+      `
+      SELECT
+        id,
+        lecture_id AS lectureId,
+        outline_item_id AS outlineItemId,
+        content,
+        status,
+        created_at AS createdAt,
+        updated_at AS updatedAt
+      FROM lecture_contents
+      WHERE outline_item_id = ?
+      LIMIT 1
+      `,
+      [outlineItemId],
+    );
+
+    return rows[0] ?? null;
   },
 
   async findById(id: string | number): Promise<LectureRow | null> {
@@ -239,5 +280,53 @@ export const lectureRepository = {
     } finally {
       connection.release();
     }
+  },
+
+  async saveContent(input: SaveLectureContentInput): Promise<LectureContentRow> {
+    const status = input.status ?? "DRAFT";
+
+    await db.execute(
+      `
+      INSERT INTO lecture_contents (
+        lecture_id,
+        outline_item_id,
+        content,
+        status
+      )
+      VALUES (?, ?, ?, ?)
+      ON DUPLICATE KEY UPDATE
+        content = VALUES(content),
+        status = VALUES(status),
+        updated_at = CURRENT_TIMESTAMP
+      `,
+      [
+        input.lectureId,
+        input.outlineItemId,
+        JSON.stringify(input.content),
+        status,
+      ],
+    );
+
+    if (status === "PUBLISHED") {
+      await db.execute(
+        `
+        UPDATE lectures
+        SET
+          status = 'PUBLISHED',
+          published_at = COALESCE(published_at, CURRENT_TIMESTAMP),
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        `,
+        [input.lectureId],
+      );
+    }
+
+    const content = await this.findContentByOutlineItem(input.outlineItemId);
+
+    if (!content) {
+      throw new Error("Lecture content was saved but could not be loaded.");
+    }
+
+    return content;
   },
 };

@@ -74,3 +74,23 @@ CREATE TABLE IF NOT EXISTS lecture_outline_items (
     FOREIGN KEY (parent_id) REFERENCES lecture_outline_items(id)
     ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS lecture_contents (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  lecture_id BIGINT UNSIGNED NOT NULL,
+  outline_item_id BIGINT UNSIGNED NOT NULL,
+  content JSON NULL,
+  status ENUM('DRAFT', 'PUBLISHED', 'ARCHIVED') NOT NULL DEFAULT 'DRAFT',
+  created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  UNIQUE KEY lecture_contents_outline_unique (outline_item_id),
+
+  CONSTRAINT lecture_contents_lecture_fk
+    FOREIGN KEY (lecture_id) REFERENCES lectures(id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT lecture_contents_outline_item_fk
+    FOREIGN KEY (outline_item_id) REFERENCES lecture_outline_items(id)
+    ON DELETE CASCADE
+);

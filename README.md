@@ -7,9 +7,8 @@ to sit beside:
 - `llp-admin` on `http://localhost:3000`
 - `llp-graphql` on `http://localhost:4000`
 
-The first version uses a Next.js route handler and in-memory seed data so the
-web and admin apps can start integrating against a real GraphQL schema before
-MySQL, authentication persistence, and file storage are connected.
+The API uses a Next.js route handler with MySQL-backed categories, lectures,
+lecture outlines, and per-section lecture content.
 
 ## Getting Started
 
@@ -32,23 +31,19 @@ Example request:
 ```bash
 curl -X POST http://localhost:4000/api/graphql \
   -H "content-type: application/json" \
-  -d "{\"query\":\"query { health { ok service version } courses(status: PUBLISHED) { id title slug lectureCount } }\"}"
+  -d "{\"query\":\"query { health { ok service } lectures { id title slug status } }\"}"
 ```
 
 ## Current Schema Coverage
 
-- Authentication: development `login`
-- Courses: list, detail, create, status updates
-- Lectures: list, detail, create, publish
-- Media: list and filter seed media
-- Users: list admin users
-- Settings: read and update site settings
-- Search: course and lecture search
+- Categories: list, detail, create, edit, archive, delete
+- Lectures: list, detail, create
+- Lecture outlines: parent and child outline items
+- Lecture content: save content per outline item
 
 ## Next Backend Steps
 
-- Add MySQL 8 with Knex.js or Prisma.
-- Replace development tokens with JWT and bcrypt password checks.
+- Add authentication with JWT and bcrypt password checks.
 - Add role-based authorization for admin mutations.
 - Add persistent media storage through local storage, S3, R2, or UploadThing.
 - Add GraphQL Code Generator for admin and web typed operations.

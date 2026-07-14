@@ -4,9 +4,30 @@ import {
   type LectureFilters,
   type LectureRow,
   type CreateLectureInput,
+  type LectureContentRow,
+  type SaveLectureContentInput,
 } from "./lecture.repository";
 
 type LectureSource = Pick<LectureRow, "id" | "categoryId">;
+type LectureOutlineItemSource = {
+  id: string | number;
+};
+
+function toLectureContent(content: LectureContentRow | null) {
+  if (!content) {
+    return null;
+  }
+
+  return {
+    id: String(content.id),
+    lectureId: String(content.lectureId),
+    outlineItemId: String(content.outlineItemId),
+    content: content.content,
+    status: content.status,
+    createdAt: content.createdAt,
+    updatedAt: content.updatedAt,
+  };
+}
 
 export const lectureResolvers = {
   lectures: (args: LectureFilters) => {
@@ -21,6 +42,11 @@ export const lectureResolvers = {
     return lectureRepository.create(args.input);
   },
 
+  saveLectureContent: async (args: { input: SaveLectureContentInput }) => {
+    const content = await lectureRepository.saveContent(args.input);
+    return toLectureContent(content);
+  },
+
   Lecture: {
     category: (lecture: LectureSource) => {
       if (!lecture.categoryId) {
@@ -32,6 +58,15 @@ export const lectureResolvers = {
 
     outlineItems: (lecture: LectureSource) => {
       return lectureRepository.findOutlineItems(lecture.id);
+    },
+  },
+
+  LectureOutlineItem: {
+    content: async (outlineItem: LectureOutlineItemSource) => {
+      const content = await lectureRepository.findContentByOutlineItem(
+        outlineItem.id,
+      );
+      return toLectureContent(content);
     },
   },
 };
