@@ -33,6 +33,24 @@ export const lectureSchema = `
         updatedAt: String
     }
 
+    input CreateLectureInput {
+        categoryId: ID
+        title: String!
+        slug: String!
+        description: String
+        readingTime: String
+        outlineItems: [CreateLectureOutlineItemInput!]!
+    }
+
+    input CreateLectureOutlineItemInput {
+        title: String!
+        children: [String!]!
+    }
+
+    extend type Mutation {
+        createLecture(input: CreateLectureInput!): Lecture!
+    }
+
     extend type Query {
         lectures(status: LectureStatus, categoryId: ID): [Lecture!]!
         lecture(slug: String!): Lecture

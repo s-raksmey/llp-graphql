@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import type { RowDataPacket } from "mysql2";
+import type { ResultSetHeader, RowDataPacket } from "mysql2";
 
 export type LectureStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 
@@ -31,6 +31,20 @@ export type LectureFilters = {
   status?: LectureStatus;
   categoryId?: string | number;
 };
+
+export type CreateLectureOutlineItemInput = {
+  title: string;
+  children: string[];
+};
+
+export type CreateLectureInput = {
+  categoryId?: string | number;
+  title: string;
+  slug: string;
+  description?: string;
+  readingTime?: string;
+  outlineItems: CreateLectureOutlineItemInput[];
+}
 
 export const lectureRepository = {
   async findAll(args: LectureFilters = {}): Promise<LectureRow[]> {
@@ -115,5 +129,115 @@ export const lectureRepository = {
     );
 
     return rows;
+  },
+
+  async findById(id: string | number): Promise<LectureRow | null> {
+    const [rows] = await db.query<LectureRow[]>(
+      `
+      SELECT
+        id,
+        category_id AS categoryId,
+        title,
+        slug,
+        description,
+        content,
+        status,
+        reading_time AS readingTime,
+        published_at AS publishedAt,
+        created_at AS createdAt,
+        updated_at AS updatedAt
+      FROM lectures
+      WHERE id = ?
+      LIMIT 1
+      `,
+      [id],
+    );
+
+    return rows[0] ?? null;
+  },
+
+  async create(input: CreateLectureInput): Promise<LectureRow> {
+    const connection = await db.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+      const [lectureResult] = await connection.execute<ResultSetHeader>(
+        `
+        INSERT INTO lectures (
+          category_id,
+          title,
+          slug,
+          description,
+          content,
+          status,
+          reading_time,
+          published_at
+        )
+        VALUES (?, ?, ?, ?, ?, 'DRAFT', ?, NULL)
+        `,
+        [
+          input.categoryId ?? null,
+          input.title,
+          input.slug,
+          input.description ?? null,
+          JSON.stringify({ type: "doc", content: [] }),
+          input.readingTime ?? "5 minutes",
+        ],
+      );
+
+      const lectureId = lectureResult.insertId;
+      let sortOrder = 0;
+
+      for (const item of input.outlineItems) {
+        const [parentResult] = await connection.execute<ResultSetHeader>(
+          `
+          INSERT INTO lecture_outline_items (
+            lecture_id,
+            parent_id,
+            title,
+            sort_order
+          )
+          VALUES (?, NULL, ?, ?)
+          `,
+          [lectureId, item.title, sortOrder],
+        );
+
+        const parentId = parentResult.insertId;
+        sortOrder += 1;
+
+        for (const childTitle of item.children) {
+          await connection.execute(
+            `
+            INSERT INTO lecture_outline_items (
+              lecture_id,
+              parent_id,
+              title,
+              sort_order
+            )
+            VALUES (?, ?, ?, ?)
+            `,
+            [lectureId, parentId, childTitle, sortOrder],
+          );
+
+          sortOrder += 1;
+        }
+      }
+
+      await connection.commit();
+
+      const lecture = await this.findById(lectureId);
+
+      if (!lecture) {
+        throw new Error("Lecture was created but could not be loaded.");
+      }
+
+      return lecture;
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
   },
 };
