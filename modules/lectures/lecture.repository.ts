@@ -69,6 +69,12 @@ export type UpdateLectureStatusInput = {
   status: LectureStatus;
 };
 
+export type DeleteLectureResult = {
+  id: string;
+  success: boolean;
+  message: string;
+};
+
 export const lectureRepository = {
   async findAll(args: LectureFilters = {}): Promise<LectureRow[]> {
     const where: string[] = [];
@@ -370,5 +376,29 @@ export const lectureRepository = {
     }
 
     return lecture;
+  },
+
+  async deleteById(id: string | number): Promise<DeleteLectureResult> {
+    const [result] = await db.execute<ResultSetHeader>(
+      `
+      DELETE FROM lectures
+      WHERE id = ?
+      `,
+      [id],
+    );
+
+    if (result.affectedRows === 0) {
+      return {
+        id: String(id),
+        success: false,
+        message: "Lecture was not found.",
+      };
+    }
+
+    return {
+      id: String(id),
+      success: true,
+      message: "Lecture deleted.",
+    };
   },
 };

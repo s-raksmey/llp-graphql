@@ -52,6 +52,10 @@ export const lectureResolvers = {
     return lectureRepository.updateStatus(args.input);
   },
 
+  deleteLecture: (args: { id: string }) => {
+    return lectureRepository.deleteById(args.id);
+  },
+
   Lecture: {
     category: (lecture: LectureSource) => {
       if (!lecture.categoryId) {

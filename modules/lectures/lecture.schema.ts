@@ -50,6 +50,12 @@ export const lectureSchema = `
         updatedAt: String
     }
 
+    type DeleteLecturePayload {
+        id: ID!
+        success: Boolean!
+        message: String!
+    }
+
     input CreateLectureInput {
         categoryId: ID
         title: String!
@@ -80,6 +86,7 @@ export const lectureSchema = `
         createLecture(input: CreateLectureInput!): Lecture!
         saveLectureContent(input: SaveLectureContentInput!): LectureContent!
         updateLectureStatus(input: UpdateLectureStatusInput!): Lecture!
+        deleteLecture(id: ID!): DeleteLecturePayload!
     }
 
     extend type Query {
